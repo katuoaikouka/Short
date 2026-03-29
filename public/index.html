@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>YouTube Shorts Clone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        body { font-family: 'Roboto', sans-serif; background: #000; margin: 0; overflow: hidden; }
+        
+        /* スナップスクロール */
+        #shorts-container {
+            height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        #shorts-container::-webkit-scrollbar { display: none; }
+
+        .short-item {
+            height: 100vh;
+            width: 100vw;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            position: relative;
+            background: #000;
+        }
+
+        video {
+            height: 100%;
+            width: 100%;
+            object-fit: cover;
+        }
+
+        /* 下部シャドウグラデーション */
+        .overlay-bottom {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30%;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* 右側アクションボタン */
+        .side-bar {
+            position: absolute;
+            right: 8px;
+            bottom: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            z-index: 20;
+            align-items: center;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .icon-circle {
+            width: 48px;
+            height: 48px;
+            background: rgba(40, 40, 40, 0.4);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 4px;
+            transition: background 0.2s;
+        }
+
+        .action-btn:active .icon-circle { background: rgba(255, 255, 255, 0.2); transform: scale(0.9); }
+
+        /* 左下情報エリア */
+        .info-bar {
+            position: absolute;
+            bottom: 24px;
+            left: 12px;
+            right: 80px;
+            z-index: 20;
+            color: white;
+        }
+
+        /* いいねアニメーション */
+        .is-liked svg { fill: #3ea6ff !important; animation: pop 0.3s ease; }
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
+
+        /* ロード中スピナー */
+        .loading {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px; height: 40px;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="shorts-container">
+        <div class="flex h-screen items-center justify-center text-white">
+            <div class="loading"></div>
+        </div>
+    </div>
+
+    <svg style="display: none;">
+        <symbol id="icon-like" viewBox="0 0 24 24"><path d="M18.77,11h-4.23l1.52-4.94C16.38,5.03,15.54,4,14.38,4c-0.58,0-1.13,0.24-1.52,0.65L7,11H3v10h4h1h9.43 c1.06,0,1.96-0.81,2.08-1.86l1.3-10.31C21.01,12.39,19.99,11,18.77,11z"></path></symbol>
+        <symbol id="icon-dislike" viewBox="0 0 24 24"><path d="M17,3h-1h-9.43c-1.06,0-1.96,0.81-2.08,1.86L3.19,15.17C3.01,16.61,4.03,18,5.25,18h4.23l-1.52,4.94 C7.64,23.97,8.48,25,9.64,25c0.58,0,1.13-0.24,1.52-0.65L17,18h4V8H17z"></path></symbol>
+        <symbol id="icon-comment" viewBox="0 0 24 24"><path d="M12.17,2.15c-5.46,0-9.88,4.04-9.88,9.02c0,2.18,0.85,4.18,2.28,5.71l-1.53,3.9c-0.19,0.49,0.21,1,0.73,0.92l4.98-0.76 c1.03,0.3,2.12,0.46,3.26,0.46c5.46,0,9.88-4.04,9.88-9.02C22.05,6.19,17.63,2.15,12.17,2.15z"></path></symbol>
+        <symbol id="icon-share" viewBox="0 0 24 24"><path d="M21.64,10.64l-8-8c-0.39-0.39-1.03-0.39-1.41,0C11.83,3.03,11.63,3.54,11.63,4v3.53C7.63,7.57,4,9.2,4,14.63 c0,2.17,1.06,4.72,2.83,6.23c0.26,0.22,0.61,0.28,0.92,0.16c0.3-0.12,0.51-0.41,0.51-0.74c0-0.13-0.01-0.25-0.03-0.38 C7.76,17.15,7.31,15.8,7.31,14.63c0-3.37,2.16-4.57,5.32-4.63V14c0,0.55,0.45,1,1,1c0.27,0,0.52-0.11,0.71-0.29l8-8 C22.03,11.33,22.03,11.03,21.64,10.64z"></path></symbol>
+    </svg>
+
+    <script>
+        const API = "http://localhost:3000/api";
+        const container = document.getElementById('shorts-container');
+
+        async function init() {
+            try {
+                const res = await fetch(`${API}/shorts`);
+                const data = await res.json();
+                render(data.videos);
+            } catch (e) {
+                container.innerHTML = `<div class="text-white p-10">サーバーが起動していません</div>`;
+            }
+        }
+
+        function render(videos) {
+            container.innerHTML = videos.map(v => `
+                <div class="short-item">
+                    <div class="loading"></div>
+                    <video loop playsinline onplay="this.parentElement.querySelector('.loading').remove()" src="${API}/stream/${v.id}"></video>
+                    
+                    <div class="overlay-bottom"></div>
+
+                    <div class="info-bar">
+                        <div class="flex items-center gap-2 mb-3">
+                            <img src="${v.author.thumbnails[0].url}" class="w-9 h-9 rounded-full border border-white/20">
+                            <span class="font-bold text-[14px]">@${v.author.name}</span>
+                            <button class="bg-white text-black px-3 py-1.5 rounded-full text-[12px] font-bold ml-1">登録</button>
+                        </div>
+                        <p class="text-[14px] leading-snug line-clamp-2">${v.title}</p>
+                    </div>
+
+                    <div class="side-bar">
+                        <button class="action-btn" onclick="this.classList.toggle('is-liked')">
+                            <div class="icon-circle"><svg class="w-7 h-7 fill-white"><use href="#icon-like"/></svg></div>
+                            <span class="text-[12px]">高評価</span>
+                        </button>
+                        <button class="action-btn">
+                            <div class="icon-circle"><svg class="w-7 h-7 fill-white"><use href="#icon-dislike"/></svg></div>
+                            <span class="text-[12px]">低評価</span>
+                        </button>
+                        <button class="action-btn">
+                            <div class="icon-circle"><svg class="w-7 h-7 fill-white"><use href="#icon-comment"/></svg></div>
+                            <span class="text-[12px]">${v.view_count.split(' ')[0]}</span>
+                        </button>
+                        <button class="action-btn">
+                            <div class="icon-circle"><svg class="w-7 h-7 fill-white"><use href="#icon-share"/></svg></div>
+                            <span class="text-[12px]">共有</span>
+                        </button>
+                        <div class="w-10 h-10 rounded-lg bg-gray-600 border-2 border-white mt-2 overflow-hidden">
+                            <img src="${v.author.thumbnails[0].url}" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            observe();
+        }
+
+        function observe() {
+            const obs = new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    const v = e.target.querySelector('video');
+                    if (e.isIntersecting) {
+                        v.play().catch(() => { v.muted = true; v.play(); });
+                    } else {
+                        v.pause();
+                        v.currentTime = 0;
+                    }
+                });
+            }, { threshold: 0.6 });
+            document.querySelectorAll('.short-item').forEach(el => obs.observe(el));
+        }
+
+        document.body.addEventListener('click', () => {
+            document.querySelectorAll('video').forEach(v => v.muted = false);
+        }, { once: true });
+
+        init();
+    </script>
+</body>
+</html>
