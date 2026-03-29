@@ -1,11 +1,20 @@
 import express from "express";
 import { Innertube, UniversalCache } from "youtubei.js";
 import fetch from "node-fetch";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const app = express();
 const PORT = 3000;
 
+// ES Modulesで現在のディレクトリパスを取得するための設定
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.use(express.json());
+
+// 静的ファイルを配信する設定（index.htmlと同じフォルダのファイルを許可）
+app.use(express.static(__dirname));
 
 // CORS設定（フロントエンドからのアクセスを許可）
 app.use((req, res, next) => {
@@ -28,6 +37,11 @@ const getYoutube = async () => {
   }
   return yt;
 };
+
+// ルート（/）にアクセスしたら index.html を返す設定
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // ショート動画フィード取得
 app.get('/api/shorts', async (req, res) => {
