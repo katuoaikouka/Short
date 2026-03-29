@@ -7,16 +7,13 @@ import { fileURLToPath } from "url";
 const app = express();
 const PORT = 3000;
 
-// ES Modulesで現在のディレクトリパスを取得するための設定
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.use(express.json());
-
-// 静的ファイルを配信する設定（index.htmlと同じフォルダのファイルを許可）
 app.use(express.static(__dirname));
 
-// CORS設定（フロントエンドからのアクセスを許可）
+// CORS設定
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -38,10 +35,13 @@ const getYoutube = async () => {
   return yt;
 };
 
-// ルート（/）にアクセスしたら index.html を返す設定
+// ルートアクセス
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
+
+// favicon.icoのエラーを消すためのダミーエンドポイント
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // ショート動画フィード取得
 app.get('/api/shorts', async (req, res) => {
@@ -68,7 +68,7 @@ app.get('/api/shorts', async (req, res) => {
   }
 });
 
-// ストリーミングプロキシ（CORS回避とRange再生用）
+// ストリーミングプロキシ
 app.get('/api/stream/:videoId', async (req, res) => {
   try {
     const { videoId } = req.params;
