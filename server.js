@@ -138,7 +138,6 @@ app.get('/video/:videoId', async (req, res) => {
                 </div>
             </div>
             <script>
-                // ... (あなたの提供したJavaScript) ...
                 let startY = 0;
                 const loader = document.getElementById('loader');
                 const commentsPanel = document.getElementById('commentsPanel');
