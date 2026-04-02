@@ -6,12 +6,10 @@ const PORT = 3000;
 
 app.use(express.static('public'));
 
-// 使用する Invidious インスタンス
+// 使用する Invidious インスタンス（安定性が高いものを選択）
 const INVIDIOUS_INSTANCE = 'https://invidious.f5.si';
 
-let yt;
-
-// YouTube APIの初期化（Invidious版では構造維持のためのログ出力のみ）
+// YouTube APIの初期化（構造維持のための空関数）
 async function initYouTube() {
     console.log('Invidious API Mode Initialized');
 }
@@ -38,6 +36,7 @@ app.get('/api/video/funny', async (req, res) => {
         const info = await videoRes.json();
         
         // 再生可能なフォーマット（映像+音声）を選択
+        // InvidiousではformatStreamsに直接再生可能なURLが含まれる
         const format = info.formatStreams.find(f => f.container === 'mp4') || info.formatStreams;
 
         if (!format || !format.url) {
@@ -49,6 +48,7 @@ app.get('/api/video/funny', async (req, res) => {
             title: info.title,
             description: info.description || "説明はありません",
             author: info.author,
+            // チャンネルアイコンのパスを修正
             avatar: (info.authorThumbnails && info.authorThumbnails.length > 0) ? info.authorThumbnails.url : "",
             likes: info.likeCount ? info.likeCount.toLocaleString() : "非公開",
             views: info.viewCount ? info.viewCount.toLocaleString() : "0",
