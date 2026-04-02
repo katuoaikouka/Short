@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shorts Pro UI - Invidious API</title>
+    <title>Shorts Pro UI - YouTube.js Real Data</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
@@ -138,7 +138,6 @@
             height: 36px;
             border-radius: 50%;
             object-fit: cover;
-            background: #333;
         }
 
         .username { font-weight: bold; font-size: 15px; }
@@ -404,8 +403,6 @@
             const res = await fetch('/api/video/funny');
             const data = await res.json();
             
-            if (data.error) throw new Error(data.error);
-
             currentVideoId = data.id;
             
             // UIへの反映
@@ -424,23 +421,18 @@
             video.load();
         } catch (e) {
             console.error("Failed to load video", e);
-            document.getElementById('swipeTarget').innerText = "動画の読み込みに失敗しました: " + e.message;
-            loader.classList.add('hidden');
+            document.getElementById('swipeTarget').innerText = "動画の読み込みに失敗しました。";
         }
     }
 
     video.addEventListener('canplay', () => {
         loader.classList.add('hidden');
-        video.play().catch(() => {
-            console.log("Autoplay blocked - needs user interaction");
-        });
+        video.play().catch(() => {});
     });
 
     video.addEventListener('timeupdate', () => {
-        if (video.duration) {
-            const percent = (video.currentTime / video.duration) * 100;
-            pBar.style.width = percent + '%';
-        }
+        const percent = (video.currentTime / video.duration) * 100;
+        pBar.style.width = percent + '%';
     });
 
     function openPanel(id) {
@@ -452,7 +444,6 @@
         document.querySelectorAll('.slide-panel').forEach(p => p.classList.remove('open'));
     }
 
-    // --- スワイプジェスチャー ---
     let touchStartY = 0;
     swipeTarget.addEventListener('touchstart', (e) => {
         touchStartY = e.touches.clientY;
@@ -465,7 +456,6 @@
         }
     }, {passive: true});
 
-    // --- 共有機能 ---
     function shareToLine() {
         const url = `https://www.youtube.com/watch?v=${currentVideoId}`;
         window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}`, '_blank');
@@ -476,8 +466,6 @@
         navigator.clipboard.writeText(url).then(() => {
             showToast("YouTube URLをコピーしました");
             closePanels();
-        }).catch(err => {
-            showToast("コピーに失敗しました");
         });
     }
 
@@ -500,19 +488,13 @@
         setTimeout(() => { toast.style.opacity = "0"; }, 2000);
     }
 
-    // ビデオクリックで再生/一時停止
     document.querySelector('.video-wrapper').addEventListener('click', (e) => {
         if(e.target.closest('.side-bar') || e.target.closest('.slide-panel') || e.target.closest('.video-meta')) return;
-        
         const anyPanelOpen = document.querySelector('.slide-panel.open');
         if (anyPanelOpen) {
             closePanels();
         } else {
-            if (video.paused) {
-                video.play();
-            } else {
-                video.pause();
-            }
+            video.paused ? video.play() : video.pause();
         }
     });
 
