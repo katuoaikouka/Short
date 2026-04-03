@@ -40,10 +40,11 @@ app.get('/api/video/funny', async (req, res) => {
 
         res.json({
             id: videoId,
-            title: info.title,
+            title: info.title || "無題",
             description: info.description || "説明はありません",
-            author: info.author,
-            avatar: (info.authorThumbnails && info.authorThumbnails.length > 0) ? info.authorThumbnails.url : "",
+            author: info.author || "不明な投稿者",
+            // 修正箇所: authorThumbnails.url とすることで undefined 404 を回避
+            avatar: (info.authorThumbnails && info.authorThumbnails.length > 0) ? info.authorThumbnails.url : "https://via.placeholder.com/100",
             likes: info.likeCount ? info.likeCount.toLocaleString() : "非公開",
             views: info.viewCount ? info.viewCount.toLocaleString() : "0",
             date: info.publishedText || "不明",
