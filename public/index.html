@@ -289,7 +289,7 @@
             <div class="loader-dot"></div>
         </div>
 
-        <video id="v" loop playsinline crossorigin="anonymous" muted></video>
+        <video id="v" loop playsinline crossorigin="anonymous"></video>
 
         <div class="side-bar">
             <div class="action-btn">
@@ -403,22 +403,18 @@
             const res = await fetch('/api/video/funny');
             const data = await res.json();
             
-            if (!data.video_url || data.video_url === "undefined") {
-                 throw new Error("Invalid video URL");
-            }
-
             currentVideoId = data.id;
             
             // UIへの反映
-            document.getElementById('ui-username').innerText = data.author || "Unknown";
-            document.getElementById('ui-avatar').src = data.avatar || "";
-            document.getElementById('ui-likes').innerText = data.likes || "0";
-            document.getElementById('swipeTarget').innerText = data.title || "No Title";
+            document.getElementById('ui-username').innerText = data.author;
+            document.getElementById('ui-avatar').src = data.avatar;
+            document.getElementById('ui-likes').innerText = data.likes;
+            document.getElementById('swipeTarget').innerText = data.title;
             
-            document.getElementById('ui-desc-likes').innerText = data.likes || "0";
-            document.getElementById('ui-desc-views').innerText = data.views || "0";
-            document.getElementById('ui-desc-date').innerText = data.date || "Unknown";
-            document.getElementById('ui-desc-text').innerText = data.description || "";
+            document.getElementById('ui-desc-likes').innerText = data.likes;
+            document.getElementById('ui-desc-views').innerText = data.views;
+            document.getElementById('ui-desc-date').innerText = data.date;
+            document.getElementById('ui-desc-text').innerText = data.description;
 
             // 動画URLセット
             video.src = data.video_url;
@@ -426,22 +422,17 @@
         } catch (e) {
             console.error("Failed to load video", e);
             document.getElementById('swipeTarget').innerText = "動画の読み込みに失敗しました。";
-            loader.classList.add('hidden');
         }
     }
 
     video.addEventListener('canplay', () => {
         loader.classList.add('hidden');
-        video.play().catch((err) => {
-            console.log("Autoplay blocked: ", err);
-        });
+        video.play().catch(() => {});
     });
 
     video.addEventListener('timeupdate', () => {
-        if (video.duration) {
-            const percent = (video.currentTime / video.duration) * 100;
-            pBar.style.width = percent + '%';
-        }
+        const percent = (video.currentTime / video.duration) * 100;
+        pBar.style.width = percent + '%';
     });
 
     function openPanel(id) {
@@ -455,12 +446,10 @@
 
     let touchStartY = 0;
     swipeTarget.addEventListener('touchstart', (e) => {
-        // 修正: touches を追加
         touchStartY = e.touches.clientY;
     }, {passive: true});
 
     swipeTarget.addEventListener('touchend', (e) => {
-        // 修正: changedTouches を追加
         let touchEndY = e.changedTouches.clientY;
         if (touchStartY - touchEndY > 30) {
             openPanel('descriptionPanel');
