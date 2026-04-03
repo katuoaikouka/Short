@@ -9,8 +9,6 @@ app.use(express.static('public'));
 // 使用する Invidious インスタンス
 const INVIDIOUS_INSTANCE = 'https://invidious.f5.si';
 
-let yt;
-
 // YouTube APIの初期化（Invidious版では構造維持のためのログ出力のみ）
 async function initYouTube() {
     console.log('Invidious API Mode Initialized');
@@ -24,7 +22,7 @@ app.get('/api/video/funny', async (req, res) => {
         const searchRes = await fetch(`${INVIDIOUS_INSTANCE}/api/v1/search?q=${searchQuery}&type=video`);
         const searchResults = await searchRes.json();
 
-        if (!searchResults || searchResults.length === 0) {
+        if (!searchResults || !searchResults.length) {
             throw new Error('No videos found');
         }
 
@@ -33,16 +31,12 @@ app.get('/api/video/funny', async (req, res) => {
         const videoData = searchResults[randomIndex];
         const videoId = videoData.videoId;
 
-        // 動画の詳細情報を取得
+        // 動画の詳細情報を取得（メタデータ用）
         const videoRes = await fetch(`${INVIDIOUS_INSTANCE}/api/v1/videos/${videoId}`);
         const info = await videoRes.json();
         
-        // 再生可能なフォーマット（映像+音声）を選択
-        const format = info.formatStreams.find(f => f.container === 'mp4') || info.formatStreams;
-
-        if (!format || !format.url) {
-            throw new Error('Streaming URL not found');
-        }
+        // ytdlpinstance-vercel.vercel.app の itag 18 ストリームURLを構築
+        const formatUrl = `https://ytdlpinstance-vercel.vercel.app/stream/${videoId}?format=18`;
 
         res.json({
             id: videoId,
@@ -53,7 +47,7 @@ app.get('/api/video/funny', async (req, res) => {
             likes: info.likeCount ? info.likeCount.toLocaleString() : "非公開",
             views: info.viewCount ? info.viewCount.toLocaleString() : "0",
             date: info.publishedText || "不明",
-            video_url: format.url
+            video_url: formatUrl
         });
     } catch (error) {
         console.error('Error fetching video:', error);
